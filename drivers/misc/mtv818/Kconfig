@@ -1,0 +1,5 @@
+config TDMB_MTV818
+    tristate "Raontech TDMB/FM module support(MTV350)"
+    depends on SPI
+    help
+      This enables support for the RAONTECH TDMB module

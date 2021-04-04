@@ -1,0 +1,99 @@
+#
+# Hanback Electronics M3(FPGA) devices
+#
+
+config VIBRATOR_HANBACK
+        bool "Hanback Vibrator Driver"
+        default y
+        help
+          Hanback Vibrator Driver for SM5-S4210.
+
+config PROXIMITY_SENSOR
+  bool "PROXIMITY Sensor"
+  depends on ( BOARD_SM5S4210 )
+  ---help---
+    PROXIMITY : proximity sensor driver for HBE-SM5-S4210 board.
+    Say Y here if you want to support proximity sensor.
+
+
+menuconfig HANBACK_FPGA
+	bool	"Hanback Electronics M3(FPGA) Device support"
+	depends on BOARD_SM5S4210
+	default yes
+	help
+		Hanback Electronics M3(FPGA) Device support
+
+
+if HANBACK_FPGA
+config LED
+	tristate "LED(8 bit)"
+	depends on BOARD_SM5S4210
+	default no
+	help
+	  8 bit LED test
+
+config TEXT_LCD
+	tristate "TEXT LCD"
+	depends on BOARD_SM5S4210
+	default no
+	help
+	  Text LCD test
+
+config 7_SEGMENT
+	tristate "7 Segment"
+	depends on BOARD_SM5S4210
+	default no
+	help
+	  7 Segment test
+
+config DOT_MATRIX
+	tristate "Dot Matrix"
+	depends on BOARD_SM5S4210
+	default no
+	help
+	  Dot Matrix test
+
+config DIP_SWITCH
+	tristate "Dip Switch"
+	depends on BOARD_SM5S4210
+	default no
+	help
+	  Dip Switch test
+
+config PIEZO
+	tristate "Piezo"
+	depends on BOARD_SM5S4210
+	default no
+	help
+	  Piezo test
+
+config FULL_COLOR_LED
+	tristate "Full Color LED"
+	depends on BOARD_SM5S4210
+	default no
+	help
+	  Full Color LED test
+
+config OLED
+	tristate "OLED"
+	depends on BOARD_SM5S4210
+	default no
+	help
+	  OLED test
+
+config BASELED
+	tristate "BASELED"
+	depends on BOARD_SM5S4210
+	default no
+	help
+	  BASELED test
+
+config BASESEG
+	tristate "BASESEG"
+	depends on BOARD_SM5S4210
+	default no
+	help
+	  BASESEG test
+
+endif #HANBACK_FPGA
+

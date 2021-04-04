@@ -1,0 +1,134 @@
+/*
+ * Proximity Device Driver
+ *  Hanback Electronics Co.,ltd
+ * File : proximity.c
+ * Date : July,2011
+ */ 
+
+#include <linux/miscdevice.h>
+#include <linux/platform_device.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/fs.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/delay.h>
+#include <asm/fcntl.h>
+#include <linux/ioport.h>
+
+#include <asm/ioctl.h>
+#include <asm/uaccess.h>
+#include <asm/io.h>
+
+#include <mach/gpio.h>
+#include <plat/gpio-cfg.h>
+#include <mach/regs-gpio.h>
+
+#include <linux/pwm.h>
+
+/* Prototypes */
+extern int s3c_adc_get_adc_data(int channel);
+#define ADC_CHANNEL  6 /* index for S5PC210 channel adc */
+
+#define PROXIMITY_BASE          0xbc
+#define IOCTL_PROXIMITY_READ   _IOR(PROXIMITY_BASE,0,int)
+
+#define PROXIMITY_PWM_CH 2
+#define PERIOD_NS 35714       /* 1000000000 / 35714 => 28 Khz */
+#define DUTY_NS 1000*18       /* 1000(1 us) * 18 => 18 us */
+
+static struct pwm_device *proximity_pwm;
+static unsigned int proximity_period_ns;
+static unsigned int proximity_duty_ns;
+
+#define DRIVER_AUTHOR	"hanback"	      
+#define DRIVER_DESC	"proximity program" 
+
+#define	PROXIMITY_NAME	"proximity"	
+
+#define TIMER_INTERVAL		  20
+
+//Global variable
+static unsigned int proximity_usage = 0;
+
+// define functions...
+int proximity_open (struct inode *inode, struct file *filp)
+{
+	int ret;
+		if(proximity_usage != 0) return -EBUSY;
+
+	proximity_usage = 1;
+
+	return 0;
+}
+
+int proximity_release (struct inode *inode, struct file *filp)
+{
+	proximity_usage = 0;
+	return 0;
+}
+
+ssize_t proximity_read(struct file *inode, char *gdata, size_t length, loff_t *off_what)
+{
+	int ret, value;
+
+	value = s3c_adc_get_adc_data(ADC_CHANNEL);
+
+	ret=copy_to_user(gdata,&value,4);
+
+	if(ret<0) return -1;
+
+	return length;
+}
+
+static int proximity_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
+{
+	int value, size;
+
+	size = _IOC_SIZE(cmd);
+
+	switch (cmd)
+	{
+	case IOCTL_PROXIMITY_READ:
+		value = s3c_adc_get_adc_data(ADC_CHANNEL);
+		copy_to_user((void *)arg, (const void *)&value, (unsigned long) size);
+	break;
+  }
+  return 0;
+}
+
+struct file_operations proximity_fops = 
+{
+  .owner		= THIS_MODULE,
+  .open		  = proximity_open,
+  .read		  = proximity_read,
+  .ioctl    = proximity_ioctl,
+  .release	= proximity_release,
+};
+
+static struct miscdevice proximity_driver = {
+        .fops   = &proximity_fops,
+        .name = PROXIMITY_NAME,
+        .minor = MISC_DYNAMIC_MINOR,
+};
+
+int proximity_init(void)
+{
+	printk("HBE-SM5-S4210 PROXIMITY Device Driver initialized Ver!! 1.0 \n");
+	return misc_register(&proximity_driver);
+}
+
+void proximity_exit(void)
+{
+	misc_deregister(&proximity_driver);
+	printk("driver: %s DRIVER EXIT\n", PROXIMITY_NAME);
+}
+
+module_init(proximity_init);	
+module_exit(proximity_exit);	
+
+MODULE_AUTHOR(DRIVER_AUTHOR);	
+MODULE_DESCRIPTION(DRIVER_DESC);
+MODULE_LICENSE("Dual BSD/GPL");	
+
